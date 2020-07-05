@@ -14,7 +14,7 @@ from http import HTTPStatus
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
-from os import execvp, stat, walk
+from os import stat, walk
 from socketserver import ThreadingTCPServer
 from threading import Thread
 from time import sleep
@@ -106,10 +106,29 @@ class WebServer(ThreadingTCPServer):
         for client in self.clients.values():
             client['handler'].send_json(obj)
 
-    def serve(self):
+    def serve(self, auto_restart: bool = False):
         print(f'Server Started on {self.server_address}')
         try:
-            self.serve_forever(.1)
+            if not auto_restart:
+                self.serve_forever(.1)
+            else:
+                t = Thread(target=self.serve_forever, args=(.1,))
+                t.start()
+                cache = {}
+                while True:
+                    for path, dirs, files in walk('.'):
+                        files = [f for f in files if f.endswith('.py')]
+                        for f in files:
+                            f = f'{path}/{f}'
+                            c = cache.get(f, 0)
+                            mtime = stat(f).st_mtime
+                            if c and c < mtime:
+                                self.shutdown()
+                                print('restarting')
+                                raise NotImplementedError  # TODO finish this
+                            else:
+                                cache[f] = mtime
+                    # sleep(5)
         except KeyboardInterrupt:
             self.shutdown()
 

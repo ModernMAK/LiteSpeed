@@ -11,7 +11,7 @@ register_error_page = App.register_error_page
 __all__ = ['Mail', 'start_with_args', 'route', 'serve', 'render', 'add_websocket', 'App', 'register_error_page']
 
 
-def start_server(application=App, bind: str = '0.0.0.0', port: int = 8000, cors_allow_origin: Union[Iterable, str] = None, cors_methods: Union[Iterable, str] = None, cookie_max_age: int = 7 * 24 * 3600, handler=RequestHandler, serve: bool = True, debug: bool = False, admins: Optional[List[str]] = None, default_email: Optional[str] = None, default_email_username: Optional[str] = None, default_email_password: Optional[str] = None, default_email_host: Optional[str] = None, default_email_port: Optional[int] = None, default_email_tls: Optional[bool] = None, default_email_ssl: Optional[bool] = None, default_email_timeout: Optional[int] = None) -> WebServer:
+def start_server(application=App, bind: str = '0.0.0.0', port: int = 8000, cors_allow_origin: Union[Iterable, str] = None, cors_methods: Union[Iterable, str] = None, cookie_max_age: int = 7 * 24 * 3600, handler=RequestHandler, serve: bool = True, debug: bool = False, admins: Optional[List[str]] = None, default_email: Optional[str] = None, default_email_username: Optional[str] = None, default_email_password: Optional[str] = None, default_email_host: Optional[str] = None, default_email_port: Optional[int] = None, default_email_tls: Optional[bool] = None, default_email_ssl: Optional[bool] = None, default_email_timeout: Optional[int] = None, auto_restart: bool = False) -> WebServer:
     server = WebServer((bind, port), handler)
     application.debug = debug
     server.application = application()
@@ -28,11 +28,11 @@ def start_server(application=App, bind: str = '0.0.0.0', port: int = 8000, cors_
     Mail.default_email['ssl'] = default_email_ssl or False
     Mail.default_email['timeout'] = default_email_timeout or 0
     if serve:
-        server.serve()
+        server.serve(auto_restart)
     return server
 
 
-def start_with_args(app=App, bind_default: str = '0.0.0.0', port_default: int = 8000, cors_allow_origin: str = '', cors_methods: str = '', cookie_max_age: int = 7 * 24 * 3600, serve: bool = True, debug: bool = False, admins: Optional[List[str]] = None, from_email: Optional[str] = None, from_username: Optional[str] = None, from_password: Optional[str] = None, from_host: Optional[str] = None, from_port: Optional[int] = None, from_tls: Optional[bool] = None, from_ssl: Optional[bool] = None, from_timeout: Optional[int] = None) -> WebServer:
+def start_with_args(app=App, bind_default: str = '0.0.0.0', port_default: int = 8000, cors_allow_origin: str = '', cors_methods: str = '', cookie_max_age: int = 7 * 24 * 3600, serve: bool = True, debug: bool = False, admins: Optional[List[str]] = None, from_email: Optional[str] = None, from_username: Optional[str] = None, from_password: Optional[str] = None, from_host: Optional[str] = None, from_port: Optional[int] = None, from_tls: Optional[bool] = None, from_ssl: Optional[bool] = None, from_timeout: Optional[int] = None, auto_restart: bool = False) -> WebServer:
     """Allows you to specify a lot of parameters for start_server"""
     parser = ArgumentParser()
     parser.add_argument('-b', '--bind', default=bind_default)
@@ -50,6 +50,7 @@ def start_with_args(app=App, bind_default: str = '0.0.0.0', port_default: int = 
     parser.add_argument('--default_email_tls', default=from_tls, action='store_true')
     parser.add_argument('--default_email_ssl', default=from_ssl, action='store_true')
     parser.add_argument('--default_email_timeout', default=from_timeout, type=int)
+    parser.add_argument('--auto_restart', default=auto_restart, action='store_true')
     return start_server(app, **parser.parse_args().__dict__, serve=serve)
 
 
